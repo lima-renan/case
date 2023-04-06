@@ -1,0 +1,1 @@
+COPY tb_base_17_raw FROM '/var/lib/postgresql/sources/base_17.csv' DELIMITER ',' CSV HEADER;

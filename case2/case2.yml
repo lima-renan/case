@@ -12,10 +12,10 @@ x-airflow-common:
     - $PWD/volumes/airflow-data/logs:/opt/airflow/logs
     - $PWD/volumes/airflow-data/plugins:/opt/airflow/plugins
     - $PWD/volumes/airflow-data/airflow.cfg:/opt/airlfow/airflow.cfg
-    - $PWD/volumes/airflow-data/data:/opt/airlfow/data/
-    - $PWD/volumes/airflow-data/querys:/opt/airlfow/querys/
   networks:
     - datanet
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
   
   
 x-airflow-depends-on:
@@ -28,12 +28,13 @@ x-airflow-depends-on:
  
 services:
   postgres:
-    container_name: postgres
+    container_name: postgresql
     image: postgres:13.0-alpine
     ports:
       - 5432:5432
     volumes:
-      - $PWD/volumes/postgres/data:/var/lib/postgresql/data
+      - $PWD/volumes/postgres/docker-entrypoint-initdb.d/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - $PWD/volumes/postgres/sources:/var/lib/postgresql/sources
     environment:
       - POSTGRES_USER=${POSTGRESQL_USER}
       - POSTGRES_PASSWORD=${POSTGRES_USER_PASSWORD}
@@ -46,7 +47,7 @@ services:
       - datanet
 
   airflow_db:
-    container_name: airflow_db
+    container_name: airflow_db_
     image: postgres:11
     environment:
       - POSTGRES_USER=${AIRFLOW_POSTGRES_USER}
@@ -64,7 +65,7 @@ services:
   airflow-scheduler:
     <<: *airflow-common
     <<: *airflow-depends-on
-    container_name: airflow_scheduler
+    container_name: airflow_scheduler_
     command: scheduler
     restart: on-failure
     ports:
@@ -75,7 +76,7 @@ services:
   airflow-webserver:
     <<: *airflow-common
     <<: *airflow-depends-on
-    container_name: airflow_webserver
+    container_name: airflow_webserver_
     restart: always
     command: webserver
     ports:
@@ -90,19 +91,19 @@ services:
 
   airflow-init:
     <<: *airflow-common
-    container_name: airflow-init
+    container_name: airflow-init_
     entrypoint: /bin/bash
     command:
       - -c
       - |
-        mkdir -p /airflow-data/logs /airflow-data/dags /airflow-data/plugins /postgres/data
+        mkdir -p /airflow-data/logs /airflow-data/dags /airflow-data/plugins
         chown -R "${AIRFLOW_UID}:0" /airflow-data/{logs,dags,plugins}
         exec /entrypoint airflow version
     networks:
       - datanet
 
   trino-coordinator:
-    container_name: trino
+    container_name: trino_
     image: trinodb/trino:latest
     hostname: trino-coordinator
     ports:
@@ -114,7 +115,7 @@ services:
       - datanet
 
   jupyter_lab:
-    container_name: jupyter_lab
+    container_name: jupyter_lab_
     build:
       context: .
       dockerfile: Dockerfile.jupyter
@@ -129,7 +130,7 @@ services:
       - datanet
 
   pgadmin:
-    container_name: pg_admin
+    container_name: pg_admin_
     image: dpage/pgadmin4
     environment:
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}

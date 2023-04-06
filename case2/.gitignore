@@ -1,0 +1,19 @@
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# Local History for Visual Studio Code
+.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
+
+#Ignore
+volumes/airflow-data/logs/*
+
+#Not Ignore
+!volumes/mongodb/docker-entrypoint-initdb.d/*
+
